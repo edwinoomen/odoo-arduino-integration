@@ -22,7 +22,7 @@ class SerialCom
     void send(int);
     
   protected:
-    int _iterations = 0;
+    int _message_id = 0;
 
 };
 
