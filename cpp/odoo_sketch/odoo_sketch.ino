@@ -1,7 +1,6 @@
 // Component includes
 #include <Switch.h>
 #include <RGBLED.h>
-#include <SerialCom.h>
 
 // Microswitch pin number
 #define SWITCH_PIN 2
@@ -11,30 +10,41 @@
 #define GREEN_PIN 5
 #define BLUE_PIN 6
 // RGB LED brightness
-#define LED_MAX_BRIGHTNESS 128
+#define LED_MAX_BRIGHTNESS 64
 
 // Message values
-#define SWITCH_PRESSED 1
+#define BAUD_RATE 115200
+#define SWITCH_PRESSED "SWITCH_PRESSED"
+#define ODOO "ODOO\n"
 
 Switch my_switch(SWITCH_PIN);
 RGBLED my_led(RED_PIN, GREEN_PIN, BLUE_PIN);
-SerialCom serial_com;
 
 void setup() {
-  serial_com.init(115200);
+  Serial.begin(BAUD_RATE);
+  my_led.on(LED_MAX_BRIGHTNESS, 0, 0);
+  bool connected = false;
+
+  // Wait for connection with ODOO adapter
+  while (!connected) {
+    while (!Serial.available()) {}
+
+    if (Serial.available() > 0) {
+      String data = Serial.readString();
+      
+      if (data == ODOO) {
+        connected = true;
+      }
+    }
+  }
+  my_led.on(0, LED_MAX_BRIGHTNESS, 0);
 }
 
 void loop() {
   if (my_switch.isClosed()) {
-    my_led.on(0,LED_MAX_BRIGHTNESS,0);
-    sendSwitchPressed();
+    my_led.on(LED_MAX_BRIGHTNESS, LED_MAX_BRIGHTNESS, LED_MAX_BRIGHTNESS * 2);
+    Serial.println(SWITCH_PRESSED);
     delay(125);
-    my_led.off();
+    my_led.on(0, LED_MAX_BRIGHTNESS, 0);
   }
-}
-
-void sendSwitchPressed() {
-  serial_com.startMessage();
-  serial_com.send(SWITCH_PRESSED);
-  serial_com.endMessage();
 }
